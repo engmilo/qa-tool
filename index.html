@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Test Case Generator</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --border: rgba(255,255,255,0.08);
+      --border-hover: rgba(255,255,255,0.15);
+      --text: #e8eaf0;
+      --text-muted: #8b8fa8;
+      --text-dim: #555870;
+      --cyan: #22d3ee;
+      --cyan-dim: rgba(34,211,238,0.1);
+      --green: #34d399;
+      --amber: #fbbf24;
+      --red: #f87171;
+      --radius: 10px;
+      --font: 'Segoe UI', system-ui, sans-serif;
+      --mono: 'JetBrains Mono', 'Fira Code', monospace;
+    }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; padding: 2rem 1rem; }
+    .container { max-width: 860px; margin: 0 auto; }
+    header { margin-bottom: 2rem; }
+    .logo { font-size: 0.75rem; font-family: var(--mono); color: var(--cyan); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.5rem; }
+    h1 { font-size: 1.8rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.4rem; }
+    .subtitle { font-size: 0.95rem; color: var(--text-muted); }
+    .api-banner { background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.2); border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 1.5rem; font-size: 0.85rem; color: #fbbf24; display: flex; align-items: flex-start; gap: 10px; }
+    .api-banner.hidden { display: none; }
+    .api-banner strong { display: block; margin-bottom: 4px; }
+    .input-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.25rem; }
+    .input-label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.6rem; display: block; }
+    textarea { width: 100%; min-height: 120px; resize: vertical; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: var(--font); font-size: 0.95rem; padding: 12px 14px; line-height: 1.6; transition: border-color 0.2s; }
+    textarea:focus { outline: none; border-color: var(--cyan); }
+    textarea::placeholder { color: var(--text-dim); }
+    input[type="password"] { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: var(--mono); font-size: 0.85rem; padding: 10px 14px; transition: border-color 0.2s; }
+    input[type="password"]:focus { outline: none; border-color: var(--cyan); }
+    input[type="password"]::placeholder { color: var(--text-dim); font-family: var(--font); }
+    .controls { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 1.5rem; }
+    button#generate-btn { padding: 10px 24px; background: var(--cyan); color: #0a0e1a; font-weight: 700; font-size: 0.9rem; border: none; border-radius: 8px; cursor: pointer; transition: opacity 0.2s, transform 0.1s; }
+    button#generate-btn:hover { opacity: 0.9; }
+    button#generate-btn:active { transform: scale(0.98); }
+    button#generate-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    select { background: var(--surface); border: 1px solid var(--border); color: var(--text); font-size: 0.85rem; padding: 9px 12px; border-radius: 8px; cursor: pointer; }
+    select:focus { outline: none; border-color: var(--cyan); }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 1.5rem; }
+    .stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; }
+    .stat-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+    .stat-value { font-size: 1.8rem; font-weight: 700; font-family: var(--mono); color: var(--cyan); }
+    .tc-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin-bottom: 12px; transition: border-color 0.2s; }
+    .tc-card:hover { border-color: var(--border-hover); }
+    .tc-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+    .tc-id { font-size: 0.7rem; font-family: var(--mono); color: var(--text-dim); margin-bottom: 4px; letter-spacing: 0.05em; }
+    .tc-title { font-size: 1rem; font-weight: 600; color: var(--text); }
+    .badge { font-size: 0.7rem; font-weight: 700; padding: 4px 10px; border-radius: 20px; letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap; }
+    .badge-high { background: rgba(248,113,113,0.15); color: var(--red); }
+    .badge-medium { background: rgba(251,191,36,0.12); color: var(--amber); }
+    .badge-low { background: rgba(52,211,153,0.12); color: var(--green); }
+    .tc-divider { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+    .section-label { font-size: 0.7rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+    .steps-list { list-style: none; padding: 0; }
+    .steps-list li { font-size: 0.875rem; color: var(--text-muted); padding: 4px 0 4px 28px; position: relative; line-height: 1.5; }
+    .steps-list li::before { content: attr(data-n); position: absolute; left: 0; top: 5px; font-size: 0.7rem; font-family: var(--mono); color: var(--text-dim); background: rgba(255,255,255,0.05); border-radius: 3px; padding: 1px 5px; }
+    .expected { font-size: 0.875rem; color: var(--text-muted); line-height: 1.6; padding-left: 4px; border-left: 2px solid var(--green); padding-left: 12px; }
+    .loading { display: flex; align-items: center; gap: 14px; padding: 2rem 0; color: var(--text-muted); font-size: 0.9rem; }
+    .spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--cyan); border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .empty { text-align: center; padding: 3rem 1rem; color: var(--text-dim); font-size: 0.9rem; border: 1px dashed var(--border); border-radius: var(--radius); }
+    .error { background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.2); border-radius: var(--radius); padding: 1rem 1.25rem; color: var(--red); font-size: 0.875rem; margin-bottom: 1rem; }
+    .copy-all-btn { font-size: 0.8rem; padding: 7px 16px; background: transparent; border: 1px solid var(--border); border-radius: 8px; color: var(--text-muted); cursor: pointer; margin-top: 4px; transition: all 0.2s; }
+    .copy-all-btn:hover { border-color: var(--border-hover); color: var(--text); }
+    footer { margin-top: 3rem; text-align: center; font-size: 0.75rem; color: var(--text-dim); font-family: var(--mono); }
+    @media (max-width: 600px) {
+      .stats { grid-template-columns: 1fr 1fr; }
+      .controls { flex-direction: column; align-items: stretch; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">// QA Tools</div>
+      <h1>AI Test Case Generator</h1>
+      <p class="subtitle">Paste a feature description or user story — get structured test cases in seconds.</p>
+    </header>
+
+    <div class="api-banner" id="api-banner">
+      <div>
+        <strong>API Key Required</strong>
+        Enter your Anthropic API key below to get started. Get one free at console.anthropic.com
+      </div>
+    </div>
+
+    <div class="input-card">
+      <label class="input-label">Anthropic API Key</label>
+      <input type="password" id="api-key" placeholder="sk-ant-..." oninput="saveKey()" />
+    </div>
+
+    <div class="input-card">
+      <label class="input-label">Feature Description or User Story</label>
+      <textarea id="feature-input" placeholder="Example: As a manager, I want to understand my colleagues' progress so I can better report our success and failures.&#10;&#10;Or: User can log in with email and password. If credentials are wrong, an error message is shown. After 3 failed attempts, the account is locked for 15 minutes."></textarea>
+    </div>
+
+    <div class="controls">
+      <button id="generate-btn" onclick="generate()">Generate test cases</button>
+      <select id="filter" onchange="renderCards()">
+        <option value="all">All priorities</option>
+        <option value="High">High only</option>
+        <option value="Medium">Medium only</option>
+        <option value="Low">Low only</option>
+      </select>
+    </div>
+
+    <div id="stats" style="display:none" class="stats">
+      <div class="stat"><div class="stat-label">Total cases</div><div class="stat-value" id="s-total">0</div></div>
+      <div class="stat"><div class="stat-label">High priority</div><div class="stat-value" id="s-high">0</div></div>
+      <div class="stat"><div class="stat-label">Steps covered</div><div class="stat-value" id="s-steps">0</div></div>
+    </div>
+
+    <div id="output"><div class="empty">Your generated test cases will appear here</div></div>
+
+    <footer>Built with Claude AI &mdash; for QA professionals</footer>
+  </div>
+
+  <script>
+    let allCases = [];
+
+    window.onload = () => {
+      const saved = localStorage.getItem('tcg_api_key');
+      if (saved) {
+        document.getElementById('api-key').value = saved;
+        document.getElementById('api-banner').classList.add('hidden');
+      }
+    };
+
+    function saveKey() {
+      const key = document.getElementById('api-key').value.trim();
+      if (key.startsWith('sk-ant-')) {
+        localStorage.setItem('tcg_api_key', key);
+        document.getElementById('api-banner').classList.add('hidden');
+      }
+    }
+
+    async function generate() {
+      const key = document.getElementById('api-key').value.trim();
+      const input = document.getElementById('feature-input').value.trim();
+      if (!key) { alert('Please enter your Anthropic API key first.'); return; }
+      if (!input) { alert('Please describe a feature or user story.'); return; }
+
+      const btn = document.getElementById('generate-btn');
+      btn.disabled = true; btn.textContent = 'Generating...';
+      document.getElementById('stats').style.display = 'none';
+      document.getElementById('output').innerHTML = '<div class="loading"><div class="spinner"></div>AI is writing your test cases...</div>';
+
+      try {
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': key,
+            'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-allow-browser': 'true'
+          },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 2000,
+            system: `You are an expert QA engineer. Given a feature description or user story, generate comprehensive test cases.
+Return ONLY valid JSON with no markdown, no backticks, no explanation:
+{"testCases":[{"id":"TC-001","title":"Short title","priority":"High|Medium|Low","steps":["Step 1","Step 2"],"expectedResult":"What should happen"}]}
+Generate 6-10 test cases covering happy paths, edge cases, and negative scenarios.`,
+            messages: [{ role: 'user', content: `Feature/Story: ${input}` }]
+          })
+        });
+
+        const data = await res.json();
+        if (data.error) throw new Error(data.error.message);
+        const text = data.content?.find(b => b.type === 'text')?.text || '';
+        const parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
+        allCases = parsed.testCases || [];
+        renderCards();
+        updateStats();
+      } catch(e) {
+        document.getElementById('output').innerHTML = `<div class="error"><strong>Error:</strong> ${e.message}</div>`;
+      }
+
+      btn.disabled = false; btn.textContent = 'Generate test cases';
+    }
+
+    function updateStats() {
+      document.getElementById('s-total').textContent = allCases.length;
+      document.getElementById('s-high').textContent = allCases.filter(t => t.priority === 'High').length;
+      document.getElementById('s-steps').textContent = allCases.reduce((s, t) => s + (t.steps?.length || 0), 0);
+      document.getElementById('stats').style.display = 'grid';
+    }
+
+    function renderCards() {
+      if (!allCases.length) return;
+      const filter = document.getElementById('filter').value;
+      const cases = filter === 'all' ? allCases : allCases.filter(t => t.priority === filter);
+      if (!cases.length) { document.getElementById('output').innerHTML = '<div class="empty">No test cases match this filter.</div>'; return; }
+
+      document.getElementById('output').innerHTML = cases.map(tc => `
+        <div class="tc-card">
+          <div class="tc-top">
+            <div>
+              <div class="tc-id">${tc.id}</div>
+              <div class="tc-title">${tc.title}</div>
+            </div>
+            <span class="badge badge-${(tc.priority||'').toLowerCase()}">${tc.priority}</span>
+          </div>
+          <hr class="tc-divider">
+          <div class="section-label">Steps</div>
+          <ol class="steps-list">${(tc.steps||[]).map((s,i)=>`<li data-n="${i+1}">${s}</li>`).join('')}</ol>
+          <hr class="tc-divider">
+          <div class="section-label">Expected result</div>
+          <div class="expected">${tc.expectedResult}</div>
+        </div>
+      `).join('') + `<button class="copy-all-btn" onclick="copyAll()">Copy all as text</button>`;
+    }
+
+    function copyAll() {
+      const text = allCases.map(tc =>
+        `${tc.id} — ${tc.title} [${tc.priority}]\nSteps:\n${(tc.steps||[]).map((s,i)=>`  ${i+1}. ${s}`).join('\n')}\nExpected: ${tc.expectedResult}`
+      ).join('\n\n---\n\n');
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.querySelector('.copy-all-btn');
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy all as text', 2000);
+      });
+    }
+  </script>
+</body>
+</html>
