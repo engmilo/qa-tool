@@ -29,9 +29,6 @@
     .logo { font-size: 0.75rem; font-family: var(--mono); color: var(--cyan); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.5rem; }
     h1 { font-size: 1.8rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.4rem; }
     .subtitle { font-size: 0.95rem; color: var(--text-muted); }
-    .api-banner { background: rgba(251,191,36,0.08); border: 1px solid rgba(251,191,36,0.2); border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 1.5rem; font-size: 0.85rem; color: #fbbf24; display: flex; align-items: flex-start; gap: 10px; }
-    .api-banner.hidden { display: none; }
-    .api-banner strong { display: block; margin-bottom: 4px; }
     .input-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.25rem; }
     .input-label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.6rem; display: block; }
     textarea { width: 100%; min-height: 120px; resize: vertical; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: var(--font); font-size: 0.95rem; padding: 12px 14px; line-height: 1.6; transition: border-color 0.2s; }
@@ -88,18 +85,6 @@
       <p class="subtitle">Paste a feature description or user story — get structured test cases in seconds.</p>
     </header>
 
-    <div class="api-banner" id="api-banner">
-      <div>
-        <strong>API Key Required</strong>
-        Enter your Anthropic API key below to get started. Get one free at console.anthropic.com
-      </div>
-    </div>
-
-    <div class="input-card">
-      <label class="input-label">Anthropic API Key</label>
-      <input type="password" id="api-key" placeholder="sk-ant-..." oninput="saveKey()" />
-    </div>
-
     <div class="input-card">
       <label class="input-label">Feature Description or User Story</label>
       <textarea id="feature-input" placeholder="Example: As a manager, I want to understand my colleagues' progress so I can better report our success and failures.&#10;&#10;Or: User can log in with email and password. If credentials are wrong, an error message is shown. After 3 failed attempts, the account is locked for 15 minutes."></textarea>
@@ -129,26 +114,8 @@
   <script>
     let allCases = [];
 
-    window.onload = () => {
-      const saved = localStorage.getItem('tcg_api_key');
-      if (saved) {
-        document.getElementById('api-key').value = saved;
-        document.getElementById('api-banner').classList.add('hidden');
-      }
-    };
-
-    function saveKey() {
-      const key = document.getElementById('api-key').value.trim();
-      if (key.startsWith('sk-ant-')) {
-        localStorage.setItem('tcg_api_key', key);
-        document.getElementById('api-banner').classList.add('hidden');
-      }
-    }
-
     async function generate() {
-      const key = document.getElementById('api-key').value.trim();
       const input = document.getElementById('feature-input').value.trim();
-      if (!key) { alert('Please enter your Anthropic API key first.'); return; }
       if (!input) { alert('Please describe a feature or user story.'); return; }
 
       const btn = document.getElementById('generate-btn');
@@ -160,10 +127,7 @@
         const res = await fetch('https://qa-proxy.eng-milo.workers.dev/', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': key,
-            'anthropic-version': '2023-06-01',
-            'anthropic-dangerous-allow-browser': 'true'
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify({
             model: 'claude-sonnet-4-20250514',
