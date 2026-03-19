@@ -88,6 +88,10 @@
     .bar-track { flex: 1; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
     .bar-fill { height: 100%; border-radius: 4px; }
     .bar-count { font-size: 0.75rem; font-family: var(--mono); color: var(--text-dim); width: 28px; text-align: right; }
+    .examples-label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.6rem; display: block; }
+    .examples-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 1.25rem; }
+    .example-chip { font-size: 0.78rem; padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+    .example-chip:hover { border-color: var(--cyan); color: var(--cyan); background: rgba(34,211,238,0.1); }
     footer { margin-top: 3rem; text-align: center; font-size: 0.75rem; color: var(--text-dim); font-family: var(--mono); }
     @media (max-width: 600px) {
       .stats { grid-template-columns: 1fr 1fr; }
@@ -116,6 +120,17 @@
         <label>Project</label>
         <input type="text" id="project-name" placeholder="e.g. Login Feature, Sprint 12..." />
         <button class="save-btn" id="save-btn" onclick="saveToProject()" disabled>Save to project</button>
+      </div>
+      <label class="examples-label">Try an example</label>
+      <div class="examples-grid">
+        <button class="example-chip" onclick="useExample(this)">Login & Authentication</button>
+        <button class="example-chip" onclick="useExample(this)">Shopping Cart & Checkout</button>
+        <button class="example-chip" onclick="useExample(this)">Search & Filters</button>
+        <button class="example-chip" onclick="useExample(this)">File Upload</button>
+        <button class="example-chip" onclick="useExample(this)">Email Notifications</button>
+        <button class="example-chip" onclick="useExample(this)">Role-Based Access</button>
+        <button class="example-chip" onclick="useExample(this)">Password Reset</button>
+        <button class="example-chip" onclick="useExample(this)">Manager Progress Report</button>
       </div>
       <div class="input-card">
         <label class="input-label">Feature Description or User Story</label>
@@ -154,6 +169,26 @@
 
   <script>
     let allCases = [];
+
+    const examples = {
+      'Login & Authentication': 'User can log in with email and password. Email must be valid format. Password is case sensitive. Show error message for wrong credentials. Lock account after 3 failed attempts for 15 minutes. A remember me option keeps the user logged in for 30 days.',
+      'Shopping Cart & Checkout': 'As a customer, I want to add items to my cart and complete checkout using a credit card. I should be able to update quantities, remove items, apply discount codes, and receive an order confirmation email after successful payment.',
+      'Search & Filters': 'Users can search for products by name, category, or price range. Results should be sorted by relevance by default. Users can filter by rating, availability, and brand. Search should return results within 2 seconds.',
+      'File Upload': 'Users can upload a profile picture in JPG or PNG format up to 5MB. Files that exceed the size limit or have invalid formats should show a clear error message. Uploaded images should be resized to 200x200 pixels automatically.',
+      'Email Notifications': 'As a user I want to receive email notifications when my order status changes so I can track my delivery. Notifications should be sent for: order confirmed, order shipped, out for delivery, and delivered. Users can unsubscribe from notifications in their settings.',
+      'Role-Based Access': 'As an admin I can create, edit and delete user accounts. Managers can view all team reports but cannot edit user accounts. Regular users can only view and edit their own profile. Unauthenticated users are redirected to the login page.',
+      'Password Reset': 'User can reset their password by entering their email address. They receive a reset link valid for 24 hours. The new password must be at least 8 characters with one number and one special character. After reset, all other sessions are invalidated.',
+      'Manager Progress Report': 'As a manager, I want to be able to understand my colleagues progress so I can better report our success and failures. I should be able to view progress by team member, filter by date range, and export reports to PDF or Excel.'
+    };
+
+    function useExample(btn) {
+      const key = btn.textContent.trim();
+      const text = examples[key];
+      if (text) {
+        document.getElementById('feature-input').value = text;
+        document.getElementById('feature-input').focus();
+      }
+    }
     let projects = JSON.parse(localStorage.getItem('qa_projects') || '[]');
 
     function showTab(name) {
