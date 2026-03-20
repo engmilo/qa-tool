@@ -156,6 +156,12 @@
     body.light .status-btn { background: #f8fafc; }
     body.light .export-btn { background: rgba(5,150,105,0.08); border-color: rgba(5,150,105,0.25); }
 
+
+    .flag-btn { width: 32px; height: 24px; border-radius: 4px; border: 2px solid transparent; cursor: pointer; overflow: hidden; padding: 0; background: none; transition: all 0.2s; opacity: 0.55; }
+    .flag-btn:hover { opacity: 1; border-color: var(--cyan); transform: scale(1.1); }
+    .flag-btn.active { opacity: 1; border-color: var(--cyan); box-shadow: 0 0 8px rgba(34,211,238,0.4); }
+    .flag-btn img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
     footer { margin-top: 3rem; text-align: center; font-size: 0.75rem; color: var(--text-dim); font-family: var(--mono); }
     @media (max-width: 600px) {
       .stats { grid-template-columns: 1fr 1fr; }
@@ -187,14 +193,7 @@
         <p class="subtitle" id="app-subtitle">Generate, save, and track test cases by project.</p>
       </div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <select id="lang-select" onchange="setLang(this.value)" style="font-size:0.8rem;padding:6px 10px;">
-          <option value="en">🇬🇧 English</option>
-          <option value="fi">🇫🇮 Suomi</option>
-          <option value="fr">🇫🇷 Français</option>
-          <option value="de">🇩🇪 Deutsch</option>
-          <option value="es">🇪🇸 Español</option>
-          <option value="ar">🇸🇦 العربية</option>
-        </select>
+        <div id="lang-switcher" style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;"></div>
         <button onclick="toggleTheme()" id="theme-btn" style="padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-size:0.85rem;transition:all 0.2s;">🌙 Dark</button>
       </div>
     </header>
@@ -725,6 +724,9 @@ Generate 6-10 test cases covering happy paths, edge cases, and negative scenario
       currentLang = lang;
       localStorage.setItem('qa_lang', lang);
       applyLang();
+      document.querySelectorAll('.flag-btn').forEach(b => b.classList.remove('active'));
+      const active = document.getElementById('flag-' + lang);
+      if (active) active.classList.add('active');
     }
 
     function toggleTheme() {
@@ -741,7 +743,7 @@ Generate 6-10 test cases covering happy paths, edge cases, and negative scenario
     window.addEventListener('DOMContentLoaded', () => {
       applyTheme();
       applyLang();
-      document.getElementById('lang-select').value = currentLang;
+      renderFlagSwitcher();
       initUsageCounter();
       setTimeout(runTyping, 600);
     });
@@ -893,6 +895,25 @@ Generate 6-10 test cases covering happy paths, edge cases, and negative scenario
       const blob = new Blob([JSON.stringify(allCases, null, 2)], {type:'application/json'});
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
       a.download = 'test-cases.json'; a.click();
+    }
+
+
+    const langs = [
+      { code: 'en', name: 'English',  flag: 'https://flagcdn.com/w40/gb.png' },
+      { code: 'fi', name: 'Suomi',    flag: 'https://flagcdn.com/w40/fi.png' },
+      { code: 'fr', name: 'Français', flag: 'https://flagcdn.com/w40/fr.png' },
+      { code: 'de', name: 'Deutsch',  flag: 'https://flagcdn.com/w40/de.png' },
+      { code: 'es', name: 'Español',  flag: 'https://flagcdn.com/w40/es.png' },
+      { code: 'ar', name: 'العربية', flag: 'https://flagcdn.com/w40/dz.png' },
+    ];
+
+    function renderFlagSwitcher() {
+      const el = document.getElementById('lang-switcher');
+      if (!el) return;
+      el.innerHTML = langs.map(l => `
+        <button class="flag-btn ${l.code === currentLang ? 'active' : ''}" onclick="setLang('${l.code}')" title="${l.name}" id="flag-${l.code}">
+          <img src="${l.flag}" alt="${l.name}" loading="lazy">
+        </button>`).join('');
     }
 
   </script>
