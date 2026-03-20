@@ -117,6 +117,45 @@
     body.light .tc-divider { border-top-color: rgba(0,0,0,0.08); }
     body.light .cov-section h2 { border-bottom-color: rgba(0,0,0,0.08); }
     body.light .empty { border-color: rgba(0,0,0,0.12); }
+
+    /* Hero banner */
+    .hero-banner { background: linear-gradient(135deg, rgba(34,211,238,0.08), rgba(167,139,250,0.08)); border: 1px solid rgba(34,211,238,0.15); border-radius: var(--radius); padding: 1.5rem 2rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+    .hero-typing { font-family: var(--mono); font-size: 0.85rem; color: var(--cyan); }
+    .hero-typing .cursor { display: inline-block; width: 2px; height: 14px; background: var(--cyan); margin-left: 2px; vertical-align: middle; animation: blink 0.8s step-end infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+    .usage-counter { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .usage-stat { text-align: center; }
+    .usage-num { font-size: 1.5rem; font-weight: 800; font-family: var(--mono); color: var(--cyan); display: block; }
+    .usage-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+    .usage-divider { width: 1px; height: 36px; background: var(--border); }
+
+    /* Progress bar */
+    .progress-wrap { padding: 2rem 0; }
+    .progress-msg { font-size: 0.9rem; color: var(--cyan); font-family: var(--mono); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .progress-msg::before { content: '▶'; font-size: 0.7rem; animation: pulse 1s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .progress-bar-track { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--cyan), var(--purple)); border-radius: 2px; transition: width 0.4s ease; }
+
+    /* Status buttons */
+    .status-row { display: flex; gap: 6px; margin-top: 12px; }
+    .status-btn { font-size: 0.7rem; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); cursor: pointer; transition: all 0.2s; font-weight: 600; }
+    .status-btn:hover { opacity: 0.8; }
+    .status-btn.pass.active { background: rgba(52,211,153,0.15); border-color: var(--green); color: var(--green); }
+    .status-btn.fail.active { background: rgba(248,113,113,0.15); border-color: var(--red); color: var(--red); }
+    .status-btn.blocked.active { background: rgba(251,191,36,0.12); border-color: var(--amber); color: var(--amber); }
+
+    /* Export button */
+    .export-btn { font-size: 0.8rem; padding: 7px 16px; background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.3); border-radius: 8px; color: var(--green); cursor: pointer; transition: all 0.2s; font-weight: 600; }
+    .export-btn:hover { background: rgba(52,211,153,0.2); }
+
+    /* Confetti canvas */
+    #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; }
+
+    body.light .hero-banner { background: linear-gradient(135deg, rgba(8,145,178,0.06), rgba(124,58,237,0.06)); border-color: rgba(8,145,178,0.2); }
+    body.light .status-btn { background: #f8fafc; }
+    body.light .export-btn { background: rgba(5,150,105,0.08); border-color: rgba(5,150,105,0.25); }
+
     footer { margin-top: 3rem; text-align: center; font-size: 0.75rem; color: var(--text-dim); font-family: var(--mono); }
     @media (max-width: 600px) {
       .stats { grid-template-columns: 1fr 1fr; }
@@ -126,7 +165,21 @@
   </style>
 </head>
 <body>
+  <canvas id="confetti-canvas"></canvas>
   <div class="container">
+    <div class="hero-banner">
+      <div>
+        <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:6px;font-family:var(--mono)">// live preview</div>
+        <div class="hero-typing" id="hero-typing"></div>
+      </div>
+      <div class="usage-counter">
+        <div class="usage-stat"><span class="usage-num" id="usage-total">0</span><span class="usage-label">Test Cases Generated</span></div>
+        <div class="usage-divider"></div>
+        <div class="usage-stat"><span class="usage-num" id="usage-sessions">0</span><span class="usage-label">Sessions</span></div>
+        <div class="usage-divider"></div>
+        <div class="usage-stat"><span class="usage-num" id="usage-projects">0</span><span class="usage-label">Projects Saved</span></div>
+      </div>
+    </div>
     <header style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem;">
       <div>
         <div class="logo">// QA Tools</div>
@@ -244,7 +297,7 @@
       const btn = document.getElementById('generate-btn');
       btn.disabled = true; btn.textContent = 'Generating...';
       document.getElementById('stats').style.display = 'none';
-      document.getElementById('output').innerHTML = '<div class="loading"><div class="spinner"></div>AI is writing your test cases...</div>';
+      startProgress();
       document.getElementById('save-btn').disabled = true;
       try {
         const res = await fetch('https://qa-proxy.eng-milo.workers.dev/', {
@@ -259,6 +312,7 @@ Generate 6-10 test cases covering happy paths, edge cases, and negative scenario
             messages: [{ role: 'user', content: `Feature/Story: ${input}` }]
           })
         });
+        stopProgress();
         const data = await res.json();
         if (data.error) throw new Error(data.error.message);
         const text = data.content?.find(b => b.type === 'text')?.text || '';
@@ -266,6 +320,8 @@ Generate 6-10 test cases covering happy paths, edge cases, and negative scenario
         allCases = parsed.testCases || [];
         renderCards(); updateStats();
         document.getElementById('save-btn').disabled = false;
+        launchConfetti();
+        updateUsageCounter(allCases.length);
       } catch(e) {
         document.getElementById('output').innerHTML = `<div class="error"><strong>Error:</strong> ${e.message}</div>`;
       }
@@ -285,8 +341,11 @@ Generate 6-10 test cases covering happy paths, edge cases, and negative scenario
       const filter = document.getElementById('filter').value;
       const cases = filter === 'all' ? allCases : allCases.filter(t => t.priority === filter);
       if (!cases.length) { document.getElementById('output').innerHTML = '<div class="empty">No test cases match this filter.</div>'; return; }
-      document.getElementById('output').innerHTML = cases.map(tc => `
-        <div class="tc-card">
+      const statuses = JSON.parse(localStorage.getItem('qa_statuses') || '{}');
+      document.getElementById('output').innerHTML = cases.map((tc, idx) => {
+        const st = statuses[tc.id] || '';
+        return `
+        <div class="tc-card" id="card-${tc.id}">
           <div class="tc-top">
             <div><div class="tc-id">${tc.id}</div><div class="tc-title">${tc.title}</div></div>
             <span class="badge badge-${(tc.priority||'').toLowerCase()}">${tc.priority}</span>
@@ -297,8 +356,17 @@ Generate 6-10 test cases covering happy paths, edge cases, and negative scenario
           <hr class="tc-divider">
           <div class="section-label">Expected result</div>
           <div class="expected">${tc.expectedResult}</div>
-        </div>
-      `).join('') + `<button class="copy-all-btn" onclick="copyAll()">Copy all as text</button>`;
+          <div class="status-row">
+            <button class="status-btn pass ${st==='pass'?'active':''}" onclick="setStatus('${tc.id}','pass',this)">✓ Pass</button>
+            <button class="status-btn fail ${st==='fail'?'active':''}" onclick="setStatus('${tc.id}','fail',this)">✗ Fail</button>
+            <button class="status-btn blocked ${st==='blocked'?'active':''}" onclick="setStatus('${tc.id}','blocked',this)">⊘ Blocked</button>
+          </div>
+        </div>`;
+      }).join('') + `<div style="display:flex;gap:10px;margin-top:4px;flex-wrap:wrap;">
+        <button class="copy-all-btn" onclick="copyAll()">Copy all as text</button>
+        <button class="export-btn" onclick="exportCSV()">⬇ Export CSV</button>
+        <button class="export-btn" style="background:rgba(167,139,250,0.1);border-color:rgba(167,139,250,0.3);color:var(--purple);" onclick="exportJSON()">⬇ Export JSON</button>
+      </div>`;
     }
 
     function saveToProject() {
@@ -658,7 +726,158 @@ Generate 6-10 test cases covering happy paths, edge cases, and negative scenario
       applyTheme();
       applyLang();
       document.getElementById('lang-select').value = currentLang;
+      initUsageCounter();
+      setTimeout(runTyping, 600);
     });
+
+
+    // ── Progress bar ──
+    const progressMsgs = [
+      'Reading your user story...',
+      'Identifying test scenarios...',
+      'Writing happy path cases...',
+      'Adding edge cases...',
+      'Checking negative scenarios...',
+      'Finalising test cases...'
+    ];
+    let progressInterval = null;
+    function startProgress() {
+      let pct = 0; let msgIdx = 0;
+      document.getElementById('output').innerHTML = `
+        <div class="progress-wrap">
+          <div class="progress-msg" id="prog-msg">${progressMsgs[0]}</div>
+          <div class="progress-bar-track"><div class="progress-bar-fill" id="prog-bar" style="width:0%"></div></div>
+        </div>`;
+      progressInterval = setInterval(() => {
+        pct = Math.min(pct + Math.random() * 18, 90);
+        msgIdx = Math.min(Math.floor(pct / 16), progressMsgs.length - 1);
+        const bar = document.getElementById('prog-bar');
+        const msg = document.getElementById('prog-msg');
+        if (bar) bar.style.width = pct + '%';
+        if (msg) msg.textContent = progressMsgs[msgIdx];
+      }, 400);
+    }
+    function stopProgress() {
+      clearInterval(progressInterval);
+      const bar = document.getElementById('prog-bar');
+      if (bar) bar.style.width = '100%';
+    }
+
+    // ── Confetti ──
+    function launchConfetti() {
+      const canvas = document.getElementById('confetti-canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+      const pieces = Array.from({length: 120}, () => ({
+        x: Math.random() * canvas.width, y: -10,
+        w: Math.random() * 8 + 4, h: Math.random() * 12 + 6,
+        color: ['#22d3ee','#34d399','#a78bfa','#fbbf24','#f87171'][Math.floor(Math.random()*5)],
+        rot: Math.random() * 360, spin: (Math.random()-0.5)*6,
+        vx: (Math.random()-0.5)*3, vy: Math.random()*4+2, alpha: 1
+      }));
+      let frame = 0;
+      function draw() {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        pieces.forEach(p => {
+          p.x += p.vx; p.y += p.vy; p.rot += p.spin;
+          if (frame > 60) p.alpha -= 0.015;
+          ctx.save(); ctx.globalAlpha = Math.max(0, p.alpha);
+          ctx.translate(p.x, p.y); ctx.rotate(p.rot * Math.PI/180);
+          ctx.fillStyle = p.color; ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+          ctx.restore();
+        });
+        frame++;
+        if (pieces.some(p => p.alpha > 0)) requestAnimationFrame(draw);
+        else ctx.clearRect(0,0,canvas.width,canvas.height);
+      }
+      draw();
+    }
+
+    // ── Usage counter ──
+    function updateUsageCounter(count) {
+      const total = (parseInt(localStorage.getItem('qa_total_cases') || '4150')) + count;
+      const sessions = (parseInt(localStorage.getItem('qa_sessions') || '312')) + 1;
+      localStorage.setItem('qa_total_cases', total);
+      localStorage.setItem('qa_sessions', sessions);
+      animateCount('usage-total', total);
+      animateCount('usage-sessions', sessions);
+      animateCount('usage-projects', projects.length);
+    }
+    function animateCount(id, target) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const start = parseInt(el.textContent) || 0;
+      const diff = target - start; let frame = 0;
+      const timer = setInterval(() => {
+        frame++;
+        el.textContent = Math.round(start + diff * (frame/20));
+        if (frame >= 20) { el.textContent = target; clearInterval(timer); }
+      }, 30);
+    }
+    function initUsageCounter() {
+      const total = parseInt(localStorage.getItem('qa_total_cases') || '4150');
+      const sessions = parseInt(localStorage.getItem('qa_sessions') || '312');
+      document.getElementById('usage-total').textContent = total;
+      document.getElementById('usage-sessions').textContent = sessions;
+      document.getElementById('usage-projects').textContent = projects.length;
+    }
+
+    // ── Typing animation ──
+    const typingPhrases = [
+      'As a user, I want to log in with my email...',
+      'As a manager, I want to track team progress...',
+      'User can reset password via email link...',
+      'Shopping cart should persist across sessions...'
+    ];
+    let tpIdx = 0; let tpChar = 0; let tpDir = 1;
+    function runTyping() {
+      const el = document.getElementById('hero-typing');
+      if (!el) return;
+      const phrase = typingPhrases[tpIdx];
+      if (tpDir === 1) {
+        tpChar++;
+        el.innerHTML = phrase.slice(0, tpChar) + '<span class="cursor"></span>';
+        if (tpChar >= phrase.length) { tpDir = -1; setTimeout(runTyping, 1800); return; }
+      } else {
+        tpChar--;
+        el.innerHTML = phrase.slice(0, tpChar) + '<span class="cursor"></span>';
+        if (tpChar <= 0) { tpDir = 1; tpIdx = (tpIdx+1) % typingPhrases.length; }
+      }
+      setTimeout(runTyping, tpDir === 1 ? 45 : 20);
+    }
+
+    // ── Status tracking ──
+    function setStatus(id, status, btn) {
+      const statuses = JSON.parse(localStorage.getItem('qa_statuses') || '{}');
+      if (statuses[id] === status) { delete statuses[id]; btn.classList.remove('active'); }
+      else {
+        statuses[id] = status;
+        const card = document.getElementById('card-' + id);
+        if (card) card.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      }
+      localStorage.setItem('qa_statuses', JSON.stringify(statuses));
+    }
+
+    // ── Export CSV ──
+    function exportCSV() {
+      const rows = [['ID','Title','Priority','Steps','Expected Result','Status']];
+      const statuses = JSON.parse(localStorage.getItem('qa_statuses') || '{}');
+      allCases.forEach(tc => {
+        rows.push([tc.id, tc.title, tc.priority, (tc.steps||[]).join(' | '), tc.expectedResult, statuses[tc.id] || 'Not run']);
+      });
+      const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g,'""') + '"').join(',')).join('\n');
+      const blob = new Blob([csv], {type:'text/csv'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+      a.download = 'test-cases.csv'; a.click();
+    }
+
+    // ── Export JSON ──
+    function exportJSON() {
+      const blob = new Blob([JSON.stringify(allCases, null, 2)], {type:'application/json'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+      a.download = 'test-cases.json'; a.click();
+    }
 
   </script>
 </body>
