@@ -385,7 +385,16 @@ Generate 6-10 test cases covering happy paths, edge cases, and negative scenario
       localStorage.setItem('qa_projects', JSON.stringify(projects));
       const btn = document.getElementById('save-btn');
       btn.textContent = 'Saved!';
-      setTimeout(() => btn.textContent = 'Save to project', 2000);
+      setTimeout(() => {
+        btn.textContent = 'Save to project';
+        btn.disabled = true;
+        document.getElementById('project-name').value = '';
+        document.getElementById('feature-input').value = '';
+        document.getElementById('filter').value = 'all';
+        document.getElementById('stats').style.display = 'none';
+        document.getElementById('output').innerHTML = '<div class="empty">' + t('outputEmpty') + '</div>';
+        allCases = [];
+      }, 1500);
     }
 
     function renderProjects() {
