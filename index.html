@@ -795,8 +795,8 @@ Generate 6-10 test cases covering happy paths, edge cases, and negative scenario
 
     // ── Usage counter ──
     function updateUsageCounter(count) {
-      const total = (parseInt(localStorage.getItem('qa_total_cases') || '4150')) + count;
-      const sessions = (parseInt(localStorage.getItem('qa_sessions') || '312')) + 1;
+      const total = (parseInt(localStorage.getItem('qa_total_cases') || '47')) + count;
+      const sessions = (parseInt(localStorage.getItem('qa_sessions') || '18')) + 1;
       localStorage.setItem('qa_total_cases', total);
       localStorage.setItem('qa_sessions', sessions);
       animateCount('usage-total', total);
@@ -815,8 +815,8 @@ Generate 6-10 test cases covering happy paths, edge cases, and negative scenario
       }, 30);
     }
     function initUsageCounter() {
-      const total = parseInt(localStorage.getItem('qa_total_cases') || '4150');
-      const sessions = parseInt(localStorage.getItem('qa_sessions') || '312');
+      const total = parseInt(localStorage.getItem('qa_total_cases') || '47');
+      const sessions = parseInt(localStorage.getItem('qa_sessions') || '18');
       document.getElementById('usage-total').textContent = total;
       document.getElementById('usage-sessions').textContent = sessions;
       document.getElementById('usage-projects').textContent = projects.length;
