@@ -29,10 +29,10 @@ test('QA Tool - main user journey', async ({ page }) => {
   const spinner = page.locator('#loading-spinner');
   await spinner.waitFor({ state: 'hidden', timeout: 15000 });
 
-  // Verify test cases rendered
-  const cards = page.locator('.test-case-card');
-  await expect(cards).toHaveCountGreaterThan(0);
-
+ // Verify test cases rendered
+const cards = page.locator('.test-case-card');
+await expect(cards).toHaveCount(1); // at least one card
+  
   // Validate card structure
   const firstCard = cards.first();
   await expect(firstCard.locator('.steps')).toBeVisible();
