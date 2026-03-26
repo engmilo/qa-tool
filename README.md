@@ -2,7 +2,7 @@
 
 > Generate, save, and track test cases by project — powered by Claude AI.
 
-[![Playwright Tests](https://github.com/engmilo/qa-tool/actions/workflows/playwright.yml/badge.svg)](https://github.com/engmilo/qa-tool/actions/workflows/playwright.yml)
+[![Playwright Tests](https://github.com/engmilo/qa-tool/actions/workflows/ci.yml/badge.svg)](https://github.com/engmilo/qa-tool/actions/workflows/ci.yml)
 [![GitHub Pages](https://img.shields.io/badge/demo-live-brightgreen)](https://engmilo.github.io/qa-tool/)
 
 ---
@@ -17,7 +17,7 @@
 - 📁 **Project management** — save and organise test cases by project
 - 📊 **Coverage dashboard** — track priority breakdown and test coverage across projects
 - ✅ **Status tracking** — mark test cases as Pass, Fail, or Blocked
-- 📤 **Export options** — download test cases as CSV or JSON
+- 📤 **Export options** — download test cases as CSV, Excel, Word, or JSON
 - 🌍 **Multilingual** — supports English, Finnish, and Arabic
 - 🌗 **Light / Dark mode** — fully themed UI
 
@@ -100,7 +100,7 @@ npx playwright show-report
 
 Tests run automatically on every push and pull request to `main` via **GitHub Actions**.
 
-The workflow is defined in [`.github/workflows/playwright.yml`](.github/workflows/playwright.yml).
+The workflow is defined in [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 
 After each run, an HTML test report is uploaded as a downloadable artifact in the **Actions** tab.
 
@@ -115,7 +115,7 @@ qa-tool/
 │   └── qa-tool.spec.ts      # Playwright end-to-end tests
 ├── .github/
 │   └── workflows/
-│       └── playwright.yml   # CI/CD workflow
+│       └── ci.yml           # CI/CD workflow
 ├── playwright.config.ts     # Playwright configuration
 └── package.json
 ```
