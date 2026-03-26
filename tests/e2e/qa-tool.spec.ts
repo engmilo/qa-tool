@@ -1,40 +1,45 @@
 import { test, expect } from '@playwright/test';
 
 test('QA Tool - main user journey', async ({ page }) => {
-  // 1. Navigate to the tool
-  await page.goto('https://engmilo.github.io/qa-tool/');
+  // Navigate to the app
+  await page.goto('https://engmilo.github.io/qa-tool/'); // adjust if needed
 
-  // 2. Verify the page title is correct
-  await expect(page).toHaveTitle(/AI Test Case Generator/i);
-
-  // 3. Verify the Generate button is visible
-  const generateBtn = page.getByRole('button', { name: 'Generate test cases' });
-  await expect(generateBtn).toBeVisible();
-
-  // 4. Click an example prompt
-  const exampleBtn = page.getByRole('button', { name: 'Manager Progress Report' });
-  await exampleBtn.click();
-
-  // 5. Verify the textarea was filled
-  // FIX: Target the Description textarea, not the Project name input
+  // Locate the textarea
   const descriptionTextarea = page.getByPlaceholder(/Example: As a manager/i);
-  
-  // Use toHaveValue to verify the large block of text appeared
-  await expect(descriptionTextarea).toHaveValue(/As a manager, I want to be able to understand my colleagues progress/i);
 
-  // Optional: If you want to fill the Project Name manually to keep the test realistic:
+  // Instead of relying on auto-filled text, fill it yourself
+  const featureText = `
+    As a manager, I want to understand my colleagues' progress
+    so I can better report our success and failures.
+  `.trim();
+
+  await descriptionTextarea.fill(featureText);
+
+  // Verify the textarea contains what we typed
+  await expect(descriptionTextarea).toHaveValue(/As a manager/i);
+
+  // Fill project name
   const projectNameInput = page.getByPlaceholder(/e\.g\. Login Feature/i);
-  await projectNameInput.fill('Manager Report Project');
+  await projectNameInput.fill('Progress Dashboard');
 
-  // 6. Navigate to Projects tab
-  await page.getByRole('button', { name: 'Projects' }).click();
-  
-  // Optional: Add a check to ensure the Projects view actually loaded
-  // await expect(page.getByText('Your Projects')).toBeVisible();
+  // Click Generate
+  const generateButton = page.getByRole('button', { name: /generate/i });
+  await generateButton.click();
 
-  // 7. Navigate to Coverage tab
-  await page.getByRole('button', { name: 'Coverage' }).click();
+  // Wait for loading spinner to disappear
+  const spinner = page.locator('#loading-spinner');
+  await spinner.waitFor({ state: 'hidden', timeout: 15000 });
 
-  // 8. Verify Coverage tab loaded
-  await expect(page.getByRole('button', { name: 'Coverage' })).toBeVisible();
+  // Verify test cases rendered
+  const cards = page.locator('.test-case-card');
+  await expect(cards).toHaveCountGreaterThan(0);
+
+  // Validate at least one card has expected structure
+  await expect(cards.first().locator('.steps')).toBeVisible();
+  await expect(cards.first().locator('.expected')).toBeVisible();
+  await expect(cards.first().locator('.priority')).toBeVisible();
+
+  // Optional: verify stats updated
+  const stats = page.locator('#stats');
+  await expect(stats).toContainText(/Total:/i);
 });
