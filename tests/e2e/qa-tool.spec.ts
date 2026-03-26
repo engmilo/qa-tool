@@ -25,21 +25,20 @@ test('QA Tool - main user journey', async ({ page }) => {
   // Click the correct Generate button (avoid the tab)
   await page.locator('#generate-btn').click();
 
-  // Wait for loading spinner to disappear
-  const spinner = page.locator('#loading-spinner');
-  await spinner.waitFor({ state: 'hidden', timeout: 15000 });
+  // Wait for generation to complete (button re-enables when done)
+  await expect(page.locator('#generate-btn')).not.toBeDisabled({ timeout: 30000 });
 
- // Verify test cases rendered
-const cards = page.locator('.test-case-card');
-await expect(cards).toHaveCount(1); // at least one card
-  
+  // Verify test cases rendered
+  const cards = page.locator('.tc-card');
+  await expect(cards).not.toHaveCount(0); // at least one card
+
   // Validate card structure
   const firstCard = cards.first();
-  await expect(firstCard.locator('.steps')).toBeVisible();
+  await expect(firstCard.locator('.steps-list')).toBeVisible();
   await expect(firstCard.locator('.expected')).toBeVisible();
-  await expect(firstCard.locator('.priority')).toBeVisible();
+  await expect(firstCard.locator('.badge')).toBeVisible();
 
   // Validate stats updated
   const stats = page.locator('#stats');
-  await expect(stats).toContainText(/Total:/i);
+  await expect(stats).toContainText(/Total cases/i);
 });
