@@ -2,12 +2,12 @@ import { test, expect } from '@playwright/test';
 
 test('QA Tool - main user journey', async ({ page }) => {
   // Navigate to the app
-  await page.goto('https://engmilo.github.io/qa-tool/'); // adjust if needed
+  await page.goto('https://engmilo.github.io/qa-tool/');
 
   // Locate the textarea
   const descriptionTextarea = page.getByPlaceholder(/Example: As a manager/i);
 
-  // Instead of relying on auto-filled text, fill it yourself
+  // Provide deterministic input
   const featureText = `
     As a manager, I want to understand my colleagues' progress
     so I can better report our success and failures.
@@ -22,9 +22,8 @@ test('QA Tool - main user journey', async ({ page }) => {
   const projectNameInput = page.getByPlaceholder(/e\.g\. Login Feature/i);
   await projectNameInput.fill('Progress Dashboard');
 
-  // Click Generate
-  const generateButton = page.getByRole('button', { name: /generate/i });
-  await generateButton.click();
+  // Click the correct Generate button (avoid the tab)
+  await page.locator('#generate-btn').click();
 
   // Wait for loading spinner to disappear
   const spinner = page.locator('#loading-spinner');
@@ -34,12 +33,13 @@ test('QA Tool - main user journey', async ({ page }) => {
   const cards = page.locator('.test-case-card');
   await expect(cards).toHaveCountGreaterThan(0);
 
-  // Validate at least one card has expected structure
-  await expect(cards.first().locator('.steps')).toBeVisible();
-  await expect(cards.first().locator('.expected')).toBeVisible();
-  await expect(cards.first().locator('.priority')).toBeVisible();
+  // Validate card structure
+  const firstCard = cards.first();
+  await expect(firstCard.locator('.steps')).toBeVisible();
+  await expect(firstCard.locator('.expected')).toBeVisible();
+  await expect(firstCard.locator('.priority')).toBeVisible();
 
-  // Optional: verify stats updated
+  // Validate stats updated
   const stats = page.locator('#stats');
   await expect(stats).toContainText(/Total:/i);
 });
