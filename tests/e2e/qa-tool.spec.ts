@@ -2,23 +2,31 @@ import { test, expect } from '@playwright/test';
 
 test('QA Tool - main user journey', async ({ page }) => {
   await page.goto('https://engmilo.github.io/qa-tool/');
-  await page.waitForLoadState('networkidle');
 
+  // Wait for UI to be ready (better than networkidle)
   const descriptionTextarea = page.getByPlaceholder(/Example: As a manager/i);
+  await expect(descriptionTextarea).toBeVisible();
 
   const featureText = `As a manager, I want to understand my colleagues' progress so I can better report our success and failures.`;
 
   await descriptionTextarea.fill(featureText);
-  await expect(descriptionTextarea).toContainText('As a manager');
+
+  // FIXED: correct assertion for textarea
+  await expect(descriptionTextarea).toHaveValue(/As a manager/);
 
   const projectNameInput = page.getByPlaceholder(/e\.g\. Login Feature/i);
+  await expect(projectNameInput).toBeVisible();
   await projectNameInput.fill('Progress Dashboard');
 
-  await page.locator('#generate-btn').click();
+  const generateBtn = page.locator('#generate-btn');
+
+  // FIXED: ensure button is interactable
+  await expect(generateBtn).toBeEnabled();
+  await generateBtn.click();
 
   const cards = page.locator('.tc-card');
 
-  // Stronger, reliable assertion
+  // FIXED: proper async wait for results
   await expect(cards.first()).toBeVisible({ timeout: 30000 });
 
   const firstCard = cards.first();
