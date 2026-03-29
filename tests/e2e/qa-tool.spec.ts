@@ -1,9 +1,12 @@
 import { test, expect } from '@playwright/test';
 
+// Skip this test automatically when running in CI
+test.skip(process.env.CI === 'true', 'Skipping Claude‑triggering test in CI');
+
 test('QA Tool - main user journey', async ({ page }) => {
   await page.goto('https://engmilo.github.io/qa-tool/');
 
-  // Wait for UI to be ready (better than networkidle)
+  // Wait for UI to be ready
   const descriptionTextarea = page.getByPlaceholder(/Example: As a manager/i);
   await expect(descriptionTextarea).toBeVisible();
 
@@ -11,7 +14,7 @@ test('QA Tool - main user journey', async ({ page }) => {
 
   await descriptionTextarea.fill(featureText);
 
-  // FIXED: correct assertion for textarea
+  // Correct assertion for textarea
   await expect(descriptionTextarea).toHaveValue(/As a manager/);
 
   const projectNameInput = page.getByPlaceholder(/e\.g\. Login Feature/i);
@@ -20,13 +23,13 @@ test('QA Tool - main user journey', async ({ page }) => {
 
   const generateBtn = page.locator('#generate-btn');
 
-  // FIXED: ensure button is interactable
+  // Ensure button is interactable
   await expect(generateBtn).toBeEnabled();
   await generateBtn.click();
 
   const cards = page.locator('.tc-card');
 
-  // FIXED: proper async wait for results
+  // Wait for results
   await expect(cards.first()).toBeVisible({ timeout: 30000 });
 
   const firstCard = cards.first();
