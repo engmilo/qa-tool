@@ -4,6 +4,28 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AI Test Case Generator</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#22d3ee">
+
+<!-- ── Open Graph / LinkedIn preview tags ── -->
+<meta property="og:title" content="AI Test Case Generator" />
+<meta property="og:description" content="Generate, save, and track test cases by project. AI-powered QA tool by Milo Haireche — 20+ years of QA expertise." />
+<meta property="og:image" content="https://engmilo.github.io/preview-qa-tool.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="627" />
+<meta property="og:url" content="https://engmilo.github.io/" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="AI Test Case Generator" />
+
+<!-- ── Twitter / X card ── -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="AI Test Case Generator" />
+<meta name="twitter:description" content="Generate, save, and track test cases by project. Built by Milo Haireche." />
+<meta name="twitter:image" content="https://engmilo.github.io/preview-qa-tool.png" />
+
+<!-- ── General SEO ── -->
+<meta name="description" content="AI-powered test case generator — Generate, save, and track test cases by project. Supports English, Finnish and Arabic. Built by Milo Haireche." />
+<meta name="author" content="Milo Haireche" />
 <style>
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 :root {
@@ -120,6 +142,7 @@ body.light .coverage-bar-fill { background: linear-gradient(90deg, #7c3aed, #a78
 .export-btn-xlsx { background: rgba(251,146,60,0.12); border-color: rgba(251,146,60,0.45); color: #fb923c; }
 .export-btn-word { background: rgba(59,130,246,0.10); border-color: rgba(59,130,246,0.35); color: #60a5fa; }
 .export-btn-json { background: rgba(167,139,250,0.10); border-color: rgba(167,139,250,0.35); color: var(--purple); }
+.export-btn-pdf { background: rgba(34,211,238,0.10); border-color: rgba(34,211,238,0.35); color: var(--cyan); }
 #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; }
 .flag-btn { width: 32px; height: 24px; border-radius: 4px; border: 2px solid transparent; cursor: pointer; overflow: hidden; padding: 0; background: none; transition: all 0.2s; opacity: 0.55; }
 .flag-btn:hover { opacity: 1; border-color: var(--cyan); transform: scale(1.1); }
@@ -127,14 +150,31 @@ body.light .coverage-bar-fill { background: linear-gradient(90deg, #7c3aed, #a78
 .flag-btn img { width: 100%; height: 100%; object-fit: cover; display: block; }
 footer { margin-top: 3rem; text-align: center; font-size: 0.75rem; color: var(--text-dim); font-family: var(--mono); }
 .datetime { font-size: 0.8rem; font-family: var(--mono); color: var(--text-muted); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; white-space: nowrap; }
-@media (max-width: 600px) { .stats { grid-template-columns: 1fr 1fr; } .controls { flex-direction: column; align-items: stretch; } }
+/* Skip link for accessibility */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+.skip-link { position: absolute; top: -40px; left: 0; background: var(--cyan); color: #0a0e1a; padding: 8px 16px; z-index: 100; font-weight: 600; }
+.skip-link:focus { top: 0; }
+/* Focus visible styles */
+:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  .hero-typing .cursor { animation: none !important; }
+}
+/* Print styles */
+@media print { body { background: #fff; color: #000; font-size: 11pt; } .tc-card { border: 1px solid #ccc; box-shadow: none; page-break-inside: avoid; margin-bottom: 8pt; } .hero-banner, .usage-counter, .datetime, #lang-switcher, #theme-btn, .tabs, .project-bar, .input-card, .controls, .export-row, .project-actions, .status-row, .badge, .tc-divider, .section-label { display: none !important; } .tc-id { font-weight: bold; } .tc-title { font-size: 12pt; font-weight: 600; } .expected { white-space: normal; } .steps-list { margin: 4pt 0; } @page { margin: 1cm; } }
+/* Mobile improvements */
+@media (max-width: 600px) { .stats { grid-template-columns: 1fr 1fr; } .controls { flex-direction: column; align-items: stretch; } .project-bar { flex-direction: column; align-items: stretch; } .project-bar input[type="text"] { width: 100%; } .usage-counter { justify-content: center; } }
 </style>
-<!-- SheetJS for Excel (.xlsx) export -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- Preconnect for performance -->
+<link rel="preconnect" href="https://cdnjs.cloudflare.com">
 </head>
 <body>
-<canvas id="confetti-canvas"></canvas>
-<div class="container">
+<a href="#main-content" class="skip-link">Skip to main content</a>
+<canvas id="confetti-canvas" aria-hidden="true"></canvas>
+<div id="sr-announce" role="status" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+<div class="container" id="main-content">
 <div class="hero-banner">
   <div>
     <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:6px;font-family:var(--mono)" id="live-preview-label">// live preview</div>
@@ -157,24 +197,24 @@ footer { margin-top: 3rem; text-align: center; font-size: 0.75rem; color: var(--
   <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
     <span class="datetime" id="datetime"></span>
     <div id="lang-switcher" style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;"></div>
-    <button onclick="toggleTheme()" id="theme-btn" style="padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-size:0.85rem;">🌙 Dark</button>
+    <button onclick="toggleTheme()" id="theme-btn" aria-label="Toggle dark/light theme" style="padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;font-size:0.85rem;">🌙 Dark</button>
   </div>
 </header>
-<div class="tabs">
-  <button class="tab active" onclick="showTab('generate')">Generate</button>
-  <button class="tab" onclick="showTab('projects')">Projects</button>
-  <button class="tab" onclick="showTab('coverage')">Coverage</button>
+<div class="tabs" role="tablist" aria-label="Navigation tabs">
+  <button class="tab active" role="tab" aria-selected="true" aria-pressed="true" onclick="showTab('generate')">Generate</button>
+  <button class="tab" role="tab" aria-selected="false" aria-pressed="false" onclick="showTab('projects')">Projects</button>
+  <button class="tab" role="tab" aria-selected="false" aria-pressed="false" onclick="showTab('coverage')">Coverage</button>
 </div>
 <div id="tab-generate">
   <div class="project-bar">
-    <label>Project</label>
+    <label for="project-name">Project</label>
     <input type="text" id="project-name" placeholder="e.g. Login Feature, Sprint 12..." />
-    <button class="save-btn" id="save-btn" onclick="saveToProject()" disabled>Save to project</button>
+    <button class="save-btn" id="save-btn" onclick="saveToProject()" disabled aria-label="Save current test cases to project">Save to project</button>
   </div>
   <label class="examples-label">Try an example</label>
   <div class="examples-grid" id="examples-grid"></div>
   <div class="input-card">
-    <label class="input-label">Feature Description or User Story</label>
+    <label class="input-label" for="feature-input">Feature Description or User Story</label>
     <textarea id="feature-input" placeholder="Example: As a manager, I want to understand my colleagues' progress..."></textarea>
   </div>
   <div class="controls">
@@ -186,7 +226,7 @@ footer { margin-top: 3rem; text-align: center; font-size: 0.75rem; color: var(--
       <option value="Low">Low only</option>
     </select>
   </div>
-  <div id="stats" style="display:none" class="stats">
+  <div id="stats" style="display:none" class="stats" role="status" aria-live="polite">
     <div class="stat"><div class="stat-label">Total cases</div><div class="stat-value" id="s-total">0</div></div>
     <div class="stat"><div class="stat-label">High priority</div><div class="stat-value" style="color:var(--red)" id="s-high">0</div></div>
     <div class="stat"><div class="stat-label">Medium priority</div><div class="stat-value" style="color:var(--amber)" id="s-medium">0</div></div>
@@ -225,10 +265,10 @@ function updateDateTime(){
 }
 updateDateTime();
 setInterval(updateDateTime,1000);
-function showTab(name){['generate','projects','coverage'].forEach(t=>{document.getElementById('tab-'+t).style.display=t===name?'block':'none';});document.querySelectorAll('.tab').forEach((b,i)=>{b.classList.toggle('active',['generate','projects','coverage'][i]===name);});if(name==='projects')renderProjects();if(name==='coverage')renderCoverage();}
-async function generate(){const input=document.getElementById('feature-input').value.trim();if(!input){alert('Please describe a feature or user story.');return;}const btn=document.getElementById('generate-btn');btn.disabled=true;btn.textContent='Generating...';document.getElementById('stats').style.display='none';startProgress();document.getElementById('save-btn').disabled=true;try{const res=await fetch(CONFIG.AI_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:CONFIG.AI_MODEL,max_tokens:CONFIG.AI_MAX_TOKENS,system:CONFIG.AI_SYSTEM,messages:[{role:'user',content:`Feature/Story: ${input}`}]})});stopProgress();const data=await res.json();if(data.error)throw new Error(data.error.message);const text=data.content?.find(b=>b.type==='text')?.text||'';const parsed=JSON.parse(text.replace(/```json|```/g,'').trim());allCases=parsed.testCases||[];renderCards();updateStats();document.getElementById('save-btn').disabled=false;launchConfetti();updateUsageCounter(allCases.length);}catch(e){document.getElementById('output').innerHTML=`<div class="error"><strong>Error:</strong> ${e.message}</div>`;}btn.disabled=false;btn.textContent='Generate test cases';}
+function showTab(name){['generate','projects','coverage'].forEach(t=>{document.getElementById('tab-'+t).style.display=t===name?'block':'none';});document.querySelectorAll('.tab').forEach((b,i)=>{const isActive=['generate','projects','coverage'][i]===name;b.classList.toggle('active',isActive);b.setAttribute('aria-selected',isActive);b.setAttribute('aria-pressed',isActive);});if(name==='projects')renderProjects();if(name==='coverage')renderCoverage();}
+async function generate(){const input=document.getElementById('feature-input').value.trim();if(!input){alert('Please describe a feature or user story.');return;}const btn=document.getElementById('generate-btn');btn.disabled=true;btn.textContent='Generating...';document.getElementById('stats').style.display='none';startProgress();document.getElementById('save-btn').disabled=true;const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),60000);try{const res=await fetch(CONFIG.AI_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:CONFIG.AI_MODEL,max_tokens:CONFIG.AI_MAX_TOKENS,system:CONFIG.AI_SYSTEM,messages:[{role:'user',content:`Feature/Story: ${input}`}]}),signal:controller.signal});clearTimeout(timeout);if(!res.ok){const errText=await res.text().catch(()=>'Unknown error');throw new Error(`API error ${res.status}: ${errText}`);}const data=await res.json();if(data.error)throw new Error(data.error.message);const text=data.content?.find(b=>b.type==='text')?.text||'';let parsed;try{parsed=JSON.parse(text.replace(/```json|```/g,'').trim());}catch(e){throw new Error('Failed to parse AI response. Please try again.');}allCases=parsed.testCases||[];renderCards();updateStats();document.getElementById('save-btn').disabled=false;launchConfetti();updateUsageCounter(allCases.length);const srAnnounce=document.getElementById('sr-announce');if(srAnnounce){srAnnounce.textContent=`${allCases.length} test cases generated successfully.`;setTimeout(()=>srAnnounce.textContent='',3000);}document.getElementById('output').querySelector('.tc-card')?.focus();}catch(e){document.getElementById('output').innerHTML=`<div class="error" role="alert" aria-live="assertive"><strong>Error:</strong> ${e.message}</div>`;}btn.disabled=false;btn.textContent='Generate test cases';clearTimeout(timeout);}
 function updateStats(){document.getElementById('s-total').textContent=allCases.length;document.getElementById('s-high').textContent=allCases.filter(t=>t.priority==='High').length;document.getElementById('s-medium').textContent=allCases.filter(t=>t.priority==='Medium').length;document.getElementById('s-steps').textContent=allCases.reduce((s,t)=>s+(t.steps?.length||0),0);document.getElementById('stats').style.display='grid';}
-function renderCards(){if(!allCases.length)return;const filter=document.getElementById('filter').value;const cases=filter==='all'?allCases:allCases.filter(t=>t.priority===filter);if(!cases.length){document.getElementById('output').innerHTML='<div class="empty">No test cases match this filter.</div>';return;}const statuses=JSON.parse(localStorage.getItem('qa_statuses')||'{}');document.getElementById('output').innerHTML=cases.map(tc=>{const st=statuses[tc.id]||'';return`<div class="tc-card" id="card-${tc.id}"><div class="tc-top"><div><div class="tc-id">${tc.id}</div><div class="tc-title">${tc.title}</div></div><span class="badge badge-${(tc.priority||'').toLowerCase()}">${tc.priority}</span></div><hr class="tc-divider"><div class="section-label">Steps</div><ol class="steps-list">${(tc.steps||[]).map((s,i)=>`<li data-n="${i+1}">${s}</li>`).join('')}</ol><hr class="tc-divider"><div class="section-label">Expected result</div><div class="expected">${tc.expectedResult}</div><div class="status-row"><button class="status-btn pass ${st==='pass'?'active':''}" onclick="setStatus('${tc.id}','pass',this)">✓ Pass</button><button class="status-btn fail ${st==='fail'?'active':''}" onclick="setStatus('${tc.id}','fail',this)">✗ Fail</button><button class="status-btn blocked ${st==='blocked'?'active':''}" onclick="setStatus('${tc.id}','blocked',this)">⊘ Blocked</button></div></div>`;}).join('')+`<div class="export-row"><button class="copy-all-btn" onclick="copyAll()">Copy all as text</button><button class="export-btn export-btn-csv" onclick="exportCSV()">⬇ Export CSV</button><button class="export-btn export-btn-xlsx" onclick="exportExcel()">⬇ Export Excel</button><button class="export-btn export-btn-word" onclick="exportWord()">⬇ Export Word</button><button class="export-btn export-btn-json" onclick="exportJSON()">⬇ Export JSON</button></div>`;}
+function renderCards(){if(!allCases.length)return;const filter=document.getElementById('filter').value;const cases=filter==='all'?allCases:allCases.filter(t=>t.priority===filter);if(!cases.length){document.getElementById('output').innerHTML='<div class="empty" role="status">No test cases match this filter.</div>';return;}const statuses=JSON.parse(localStorage.getItem('qa_statuses')||'{}');document.getElementById('output').innerHTML=cases.map(tc=>{const st=statuses[tc.id]||'';return`<div class="tc-card" id="card-${tc.id}" tabindex="0" role="article"><div class="tc-top"><div><div class="tc-id">${tc.id}</div><div class="tc-title">${tc.title}</div></div><span class="badge badge-${(tc.priority||'').toLowerCase()}">${tc.priority}</span></div><hr class="tc-divider"><div class="section-label">Steps</div><ol class="steps-list">${(tc.steps||[]).map((s,i)=>`<li data-n="${i+1}">${s}</li>`).join('')}</ol><hr class="tc-divider"><div class="section-label">Expected result</div><div class="expected">${tc.expectedResult}</div><div class="status-row" role="group" aria-label="Test case status"><button class="status-btn pass ${st==='pass'?'active':''}" aria-pressed="${st==='pass'}" onclick="setStatus('${tc.id}','pass',this)">✓ Pass</button><button class="status-btn fail ${st==='fail'?'active':''}" aria-pressed="${st==='fail'}" onclick="setStatus('${tc.id}','fail',this)">✗ Fail</button><button class="status-btn blocked ${st==='blocked'?'active':''}" aria-pressed="${st==='blocked'}" onclick="setStatus('${tc.id}','blocked',this)">⊘ Blocked</button></div></div>`;}).join('')+`<div class="export-row"><button class="copy-all-btn" onclick="copyAll()">Copy all as text</button><button class="export-btn export-btn-csv" onclick="exportCSV()" aria-label="Download as CSV file">⬇ Export CSV</button><button class="export-btn export-btn-xlsx" onclick="exportExcel()" aria-label="Download as Excel file">⬇ Export Excel</button><button class="export-btn export-btn-word" onclick="exportWord()" aria-label="Download as Word document">⬇ Export Word</button><button class="export-btn export-btn-json" onclick="exportJSON()" aria-label="Download as JSON file">⬇ Export JSON</button><button class="export-btn export-btn-pdf" onclick="exportPDF()" aria-label="Print or save as PDF">🖨 Export PDF</button></div>`;}
 function saveToProject(){const name=document.getElementById('project-name').value.trim()||'Untitled Project';const story=document.getElementById('feature-input').value.trim();const idx=projects.findIndex(p=>p.name===name);const project={name,story,testCases:[...allCases],savedAt:new Date().toISOString(),high:allCases.filter(t=>t.priority==='High').length,medium:allCases.filter(t=>t.priority==='Medium').length,low:allCases.filter(t=>t.priority==='Low').length,steps:allCases.reduce((s,t)=>s+(t.steps?.length||0),0)};if(idx>=0){if(!confirm(`A project named "${name}" already exists. Overwrite it?`))return;projects[idx]=project;}else{projects.unshift(project);}localStorage.setItem('qa_projects',JSON.stringify(projects));const btn=document.getElementById('save-btn');btn.textContent='Saved!';setTimeout(()=>{btn.textContent='Save to project';btn.disabled=true;document.getElementById('project-name').value='';document.getElementById('feature-input').value='';document.getElementById('filter').value='all';document.getElementById('stats').style.display='none';document.getElementById('output').innerHTML='<div class="empty">'+t('outputEmpty')+'</div>';allCases=[];},1500);}
 function renderProjects(){const el=document.getElementById('projects-list');if(!projects.length){el.innerHTML='<div class="empty">No projects saved yet. Generate test cases and save them to a project!</div>';return;}el.innerHTML=projects.map((p,i)=>{const total=p.testCases.length;const highPct=total?Math.round(((p.high||0)/total)*100):0;const date=new Date(p.savedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});return`<div class="project-card"><div class="project-name">${p.name}</div><div class="project-date">Saved ${date}</div><div class="project-meta"><span><strong style="color:var(--cyan)">${total}</strong> test cases</span><span><strong style="color:var(--red)">${p.high||0}</strong> high</span><span><strong style="color:var(--amber)">${p.medium||0}</strong> medium</span><span><strong style="color:var(--green)">${p.low||0}</strong> low</span><span><strong style="color:var(--cyan)">${p.steps||0}</strong> steps</span></div><div class="coverage-bar-wrap"><div class="coverage-bar-label"><span>High priority ratio</span><span style="color:var(--green);font-weight:700">${highPct}%</span></div><div class="coverage-bar"><div class="coverage-bar-fill" style="width:${highPct}%"></div></div></div><div class="project-actions"><button class="btn-sm" onclick="loadProject(${i})">Load test cases</button><button class="btn-sm danger" onclick="deleteProject(${i})">Delete</button></div></div>`;}).join('');}
 function loadProject(i){const p=projects[i];allCases=p.testCases;document.getElementById('feature-input').value=p.story;document.getElementById('project-name').value=p.name;showTab('generate');renderCards();updateStats();document.getElementById('save-btn').disabled=false;}
@@ -237,11 +277,25 @@ function renderCoverage(){const el=document.getElementById('coverage-content');i
 function copyAll(){const text=allCases.map(tc=>`${tc.id} — ${tc.title} [${tc.priority}]\nSteps:\n${(tc.steps||[]).map((s,i)=>` ${i+1}. ${s}`).join('\n')}\nExpected: ${tc.expectedResult}`).join('\n\n---\n\n');navigator.clipboard.writeText(text).then(()=>{const btn=document.querySelector('.copy-all-btn');btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy all as text',2000);});}
 
 /* ── Export CSV ── */
-function exportCSV(){const statuses=JSON.parse(localStorage.getItem('qa_statuses')||'{}');const rows=[['ID','Title','Priority','Steps','Expected Result','Status']];allCases.forEach(tc=>{rows.push([tc.id,tc.title,tc.priority,(tc.steps||[]).join(' | '),tc.expectedResult,statuses[tc.id]||'Not run']);});const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');const blob=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='test-cases.csv';a.click();}
+function exportCSV(){const projectName=(document.getElementById('project-name')?.value.trim()||'test-cases').replace(/[^a-z0-9_-]/gi,'_').toLowerCase();const ts=new Date().toISOString().slice(0,10);const statuses=JSON.parse(localStorage.getItem('qa_statuses')||'{}');const rows=[['ID','Title','Priority','Steps','Expected Result','Status']];allCases.forEach(tc=>{rows.push([tc.id,tc.title,tc.priority,(tc.steps||[]).join(' | '),tc.expectedResult,statuses[tc.id]||'Not run']);});const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');const blob=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${projectName}_${ts}.csv`;a.click();}
 
-/* ── Export Excel (.xlsx) — NEW ── */
-function exportExcel(){
-  if(typeof XLSX==='undefined'){alert('Excel library not loaded yet, please retry in a moment.');return;}
+/* ── Export Excel (.xlsx) — lazy-loaded ── */
+let xlsxLoaded=false;
+async function loadXLSX(){
+  if(xlsxLoaded||typeof XLSX!=='undefined')return;
+  await new Promise((resolve,reject)=>{
+    const s=document.createElement('script');
+    s.src='./libs/xlsx.full.min.js';
+    s.onload=()=>{xlsxLoaded=true;resolve();};
+    s.onerror=reject;
+    document.head.appendChild(s);
+  });
+}
+async function exportExcel(){
+  await loadXLSX();
+  if(typeof XLSX==='undefined'){alert('Excel library failed to load. Please try again.');return;}
+  const projectName=(document.getElementById('project-name')?.value.trim()||'test-cases').replace(/[^a-z0-9_-]/gi,'_').toLowerCase();
+  const ts=new Date().toISOString().slice(0,10);
   const statuses=JSON.parse(localStorage.getItem('qa_statuses')||'{}');
   const header=['ID','Title','Priority','Steps','Expected Result','Status'];
   const data=allCases.map(tc=>[tc.id,tc.title,tc.priority,(tc.steps||[]).map((s,i)=>`${i+1}. ${s}`).join('\n'),tc.expectedResult,statuses[tc.id]||'Not run']);
@@ -250,21 +304,22 @@ function exportExcel(){
   ws['!rows']=[{hpt:22},...data.map(()=>({hpt:60}))];
   const range=XLSX.utils.decode_range(ws['!ref']);
   for(let R=range.s.r;R<=range.e.r;R++){for(let C=range.s.c;C<=range.e.c;C++){const addr=XLSX.utils.encode_cell({r:R,c:C});if(!ws[addr])continue;if(!ws[addr].s)ws[addr].s={};ws[addr].s.alignment={wrapText:true,vertical:'top'};if(R===0){ws[addr].s.font={bold:true,color:{rgb:'FFFFFF'}};ws[addr].s.fill={patternType:'solid',fgColor:{rgb:'1A1D27'}};ws[addr].s.border={bottom:{style:'medium',color:{rgb:'22D3EE'}}};}else{if(C===2){const v=ws[addr].v;const rgb=v==='High'?'F87171':v==='Medium'?'FBBF24':'34D399';ws[addr].s.font={bold:true,color:{rgb}};}ws[addr].s.fill={patternType:'solid',fgColor:{rgb:R%2===0?'F7FAFC':'FFFFFF'}};}}}
-  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Test Cases');XLSX.writeFile(wb,'test-cases.xlsx');
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Test Cases');XLSX.writeFile(wb,`${projectName}_${ts}.xlsx`);
 }
 
 /* ── Export Word (.doc) — NEW ── */
 function exportWord(){
   const statuses=JSON.parse(localStorage.getItem('qa_statuses')||'{}');
+  const projectName=(document.getElementById('project-name')?.value.trim()||'test-cases').replace(/[^a-z0-9_-]/gi,'_').toLowerCase();
   const date=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
   const pc={High:'#dc2626',Medium:'#d97706',Low:'#059669'};
   const rows=allCases.map(tc=>{const st=statuses[tc.id]||'Not run';const steps=(tc.steps||[]).map(s=>`<li style="margin-bottom:4px">${s}</li>`).join('');const c=pc[tc.priority]||'#555';const sc=st==='pass'?'#059669':st==='fail'?'#dc2626':st==='blocked'?'#d97706':'#888';return`<tr><td style="padding:10px 12px;border:1px solid #e2e8f0;font-family:Consolas,monospace;font-size:10pt;color:#4a5568;white-space:nowrap;vertical-align:top">${tc.id}</td><td style="padding:10px 12px;border:1px solid #e2e8f0;font-size:10.5pt;font-weight:600;color:#1a202c;vertical-align:top">${tc.title}</td><td style="padding:10px 12px;border:1px solid #e2e8f0;text-align:center;vertical-align:top"><span style="background:${c}22;color:${c};font-weight:700;font-size:9pt;padding:3px 10px;border-radius:12px">${tc.priority}</span></td><td style="padding:10px 12px;border:1px solid #e2e8f0;font-size:10pt;color:#4a5568;vertical-align:top"><ol style="margin:0;padding-left:18px;line-height:1.6">${steps}</ol></td><td style="padding:10px 12px;border:1px solid #e2e8f0;font-size:10pt;color:#2d3748;border-left:3px solid #38a169;vertical-align:top;line-height:1.6">${tc.expectedResult}</td><td style="padding:10px 12px;border:1px solid #e2e8f0;text-align:center;font-weight:700;font-size:9.5pt;color:${sc};vertical-align:top">${st.charAt(0).toUpperCase()+st.slice(1)}</td></tr>`;}).join('');
   const html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"><style>body{font-family:Calibri,Arial,sans-serif;margin:2cm;color:#1a202c}h1{font-size:22pt;font-weight:700;margin-bottom:4px}.meta{font-size:10pt;color:#718096;margin-bottom:28px}table{border-collapse:collapse;width:100%}thead tr{background:#1a202c}thead th{padding:11px 12px;color:#fff;font-weight:700;font-size:9.5pt;text-align:left;border:1px solid #2d3748;text-transform:uppercase;letter-spacing:.04em}tbody tr:nth-child(even){background:#f7fafc}</style></head><body><h1>&#128203; Test Cases Report</h1><p class="meta">Generated: ${date} &bull; ${allCases.length} test case${allCases.length!==1?'s':''} &bull; QA Tools by Milo Haireche</p><table><thead><tr><th style="width:8%">ID</th><th style="width:20%">Title</th><th style="width:9%">Priority</th><th style="width:30%">Steps</th><th style="width:26%">Expected Result</th><th style="width:7%">Status</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
-  const blob=new Blob(['\uFEFF'+html],{type:'application/msword'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='test-cases.doc';a.click();
-}
+  const blob=new Blob(['\uFEFF'+html],{type:'application/msword'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${projectName}.doc`;a.click();}
+function exportPDF(){window.print();}
 
 /* ── Export JSON ── */
-function exportJSON(){const blob=new Blob([JSON.stringify(allCases,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='test-cases.json';a.click();}
+function exportJSON(){const projectName=(document.getElementById('project-name')?.value.trim()||'test-cases').replace(/[^a-z0-9_-]/gi,'_').toLowerCase();const ts=new Date().toISOString().slice(0,10);const blob=new Blob([JSON.stringify(allCases,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${projectName}_${ts}.json`;a.click();}
 
 const i18n={en:{title:'AI Test Case Generator',subtitle:'Generate, save, and track test cases by project.',tabGenerate:'Generate',tabProjects:'Projects',tabCoverage:'Coverage',projectLabel:'Project',projectPlaceholder:'e.g. Login Feature, Sprint 12...',saveBtn:'Save to project',examplesLabel:'Try an example',featureLabel:'Feature Description or User Story',featurePlaceholder:"Example: As a manager, I want to understand my colleagues' progress...",generateBtn:'Generate test cases',filterAll:'All priorities',filterHigh:'High only',filterMedium:'Medium only',filterLow:'Low only',statTotal:'Total cases',statHigh:'High priority',statMedium:'Medium priority',statSteps:'Steps covered',outputEmpty:'Your generated test cases will appear here',footer:'QA Tools by Milo Haireche — 20+ years of QA expertise',themeLight:'☀️ Light',themeDark:'🌙 Dark',deleteConfirm:'Delete this project?',livePreview:'// live preview',lblTestCases:'Test Cases Generated',lblSessions:'Sessions',lblProjects:'Projects Saved',typingPhrases:['As a user, I want to log in with my email...','As a manager, I want to track team progress...','User can reset password via email link...','Shopping cart should persist across sessions...'],examples:{'Login & Authentication':'User can log in with email and password. Email must be valid format. Password is case sensitive. Show error message for wrong credentials. Lock account after 3 failed attempts for 15 minutes.','Shopping Cart & Checkout':'As a customer, I want to add items to my cart and complete checkout using a credit card. I should be able to update quantities, remove items, apply discount codes, and receive an order confirmation email.','Email Notifications':'As a user I want to receive email notifications when my order status changes. Notifications for: order confirmed, shipped, out for delivery, and delivered. Users can unsubscribe in settings.','Role-Based Access':'As an admin I can create, edit and delete user accounts. Managers can view all team reports but cannot edit accounts. Regular users can only view and edit their own profile.','Password Reset':'User can reset their password by entering their email. They receive a reset link valid for 24 hours. New password must be 8+ chars with one number and one special character.','Manager Progress Report':'As a manager, I want to understand my colleagues progress so I can better report our success and failures. View progress by team member, filter by date range, and export reports.'}},fi:{title:'AI-testitapausgeneraattori',subtitle:'Luo, tallenna ja seuraa testitapauksia projekteittain.',tabGenerate:'Luo',tabProjects:'Projektit',tabCoverage:'Kattavuus',projectLabel:'Projekti',projectPlaceholder:'esim. Kirjautuminen, Sprint 12...',saveBtn:'Tallenna projektiin',examplesLabel:'Kokeile esimerkkiä',featureLabel:'Ominaisuuden kuvaus tai käyttäjätarina',featurePlaceholder:'Esimerkki: Käyttäjä voi kirjautua...',generateBtn:'Luo testitapaukset',filterAll:'Kaikki prioriteetit',filterHigh:'Vain korkeat',filterMedium:'Vain keskitasot',filterLow:'Vain matalat',statTotal:'Yhteensä',statHigh:'Korkea prioriteetti',statMedium:'Keskitaso',statSteps:'Vaiheet yhteensä',outputEmpty:'Luodut testitapaukset näkyvät tässä',footer:'QA Tools, Milo Haireche — 20+ vuotta QA-kokemusta',themeLight:'☀️ Vaalea',themeDark:'🌙 Tumma',deleteConfirm:'Poista tämä projekti?',livePreview:'// esikatselu',lblTestCases:'Testitapaukset',lblSessions:'Istunnot',lblProjects:'Tallennetut projektit',typingPhrases:['Käyttäjänä haluan kirjautua sähköpostillani...','Esimiehenä haluan seurata tiimin edistymistä...','Käyttäjä voi nollata salasanan sähköpostilinkillä...','Ostoskorin pitäisi säilyä istuntojen välillä...'],examples:{'Kirjautuminen & Todennus':'Käyttäjä voi kirjautua sisään sähköpostilla ja salasanalla. Sähköpostin on oltava oikeassa muodossa. Salasana on kirjainkoolla merkitsevä. Näytä virheilmoitus väärillä tunnuksilla. Lukitse tili 3 epäonnistuneen yrityksen jälkeen 15 minuutiksi.','Ostoskori & Kassa':'Asiakkaana haluan lisätä tuotteita ostoskoriini ja suorittaa maksun luottokortilla. Haluan pystyä päivittämään määriä, poistamaan tuotteita, käyttämään alennkoodeja ja vastaanottamaan tilausvahvistuksen sähköpostitse.','Sähköposti-ilmoitukset':'Haluan vastaanottaa sähköposti-ilmoituksia, kun tilaukseni tila muuttuu. Ilmoitukset: tilaus vahvistettu, lähetetty, jaellu ja toimitettu. Käyttäjät voivat peruuttaa tilauksen asetuksista.','Roolipohjainen käyttö':'Järjestelmänvalvojana voin luoda, muokata ja poistaa käyttäjätilejä. Esimiehet voivat tarkastella kaikkia tiimiraportteja mutta eivät voi muokata tilejä. Tavalliset käyttäjät voivat vain tarkastella ja muokata omaa profiiliaan.','Salasanan nollaus':'Käyttäjä voi nollata salasanansa syöttämällä sähköpostiosoitteensa. He saavat nollauslinkin, joka on voimassa 24 tuntia. Uuden salasanan on oltava vähintään 8 merkkiä ja sisältää yksi numero ja yksi erikoismerkki.','Esimiehen edistyminen':'Esimiehenä haluan ymmärtää kollegoideni edistymistä voidakseni raportoida paremmin onnistumisistamme ja epäonnistumisistamme. Tarkastelen edistymistä tiimin jäsenen mukaan, suodatan päivämäärän mukaan ja vien raportteja.'}},ar:{title:'مولد حالات الاختبار بالذكاء الاصطناعي',subtitle:'أنشئ وسجّل وتتبع حالات الاختبار حسب المشروع.',tabGenerate:'توليد',tabProjects:'المشاريع',tabCoverage:'التغطية',projectLabel:'المشروع',projectPlaceholder:'مثال: تسجيل الدخول...',saveBtn:'حفظ في المشروع',examplesLabel:'جرب مثالاً',featureLabel:'وصف الميزة',featurePlaceholder:'مثال: كمدير أريد فهم تقدم زملائي...',generateBtn:'توليد حالات الاختبار',filterAll:'كل الأولويات',filterHigh:'عالية فقط',filterMedium:'متوسطة فقط',filterLow:'منخفضة فقط',statTotal:'الإجمالي',statHigh:'أولوية عالية',statMedium:'أولوية متوسطة',statSteps:'الخطوات المغطاة',outputEmpty:'ستظهر حالات الاختبار هنا',footer:'QA Tools بواسطة Milo Haireche',themeLight:'☀️ فاتح',themeDark:'🌙 داكن',deleteConfirm:'هل تريد حذف هذا المشروع؟',livePreview:'// معاينة مباشرة',lblTestCases:'حالات الاختبار المولدة',lblSessions:'الجلسات',lblProjects:'المشاريع المحفوظة',typingPhrases:['كمستخدم أريد تسجيل الدخول ببريد الإلكتروني...','كمدير أريد تتبع تقدم الفريق...','المستخدم يمكن إعادة تعيين كلمة المرور عبر رابط البريد...','سلة التسوق يجب أن تبقى بين الجلسات...'],examples:{'تسجيل الدخول':'يمكن للمستخدم تسجيل الدخول بالبريد الإلكتروني وكلمة المرور. يجب أن يكون البريد الإلكتروني بصيغة صحيحة. كلمة المرور حساسة لحالة الأحرف. إظهار رسالة خطأ عند بيانات الاعتماد الخاطئة. قفل الحساب بعد 3 محاولات فاشلة لمدة 15 دقيقة.','سلة التسوق و الدفع':'كعميل، أريد إضافة عناصر إلى سلتي وإتمام الدفع باستخدام بطاقة الائتمان. يجب أن أتمكن من تحديث الكميات وإزالة العناصر وتطبيق رموز الخصم واستلام تأكيد الطلب عبر البريد الإلكتروني.','إشعارات البريد':'أريد استلام إشعارات بالبريد الإلكتروني عند تغيير حالة طلبي. الإشعارات: تأكيد الطلب، الشحن، التوصيل والتسليم. يمكن للمستخدمين إلغاء الاشتراك في الإعدادات.','الوصول حسب الأدوار':'بصفتي المسؤول، يمكنني إنشاء وتعديل وحذف حسابات المستخدمين. المديرون يمكنهم عرض تقارير الفريق لكن لا يمكنهم تعديل الحسابات. المستخدمون العاديون يمكنهم فقط عرض وتعديل ملفهم الشخصي.','استعادة كلمة المرور':'يمكن للمستخدم استعادة كلمة المرور بإدخال بريده الإلكتروني. يتلقى رابط استعادة صالح لمدة 24 ساعة. يجب أن تتكون كلمة المرور الجديدة من 8 أحرف على الأقل مع رقم ورمز خاص.','تقرير تقدم المدير':'كمدير، أريد فهم تقدم زملائي لأتمكن من الإبلاغ بشكل أفضل عن نجاحاتنا وإخفاقاتنا. عرض التقدم حسب عضو الفريق، تصفية حسب نطاق التاريخ وتصدير التقارير.'}}};
 let currentLang=localStorage.getItem('qa_lang')||'en';
@@ -275,7 +330,7 @@ function applyTabLabels(){const tabs=document.querySelectorAll('.tab');if(tabs[0
 function setLang(lang){currentLang=lang;localStorage.setItem('qa_lang',lang);applyLang();document.querySelectorAll('.flag-btn').forEach(b=>b.classList.remove('active'));const a=document.getElementById('flag-'+lang);if(a)a.classList.add('active');}
 function toggleTheme(){isLight=!isLight;localStorage.setItem('qa_theme',isLight?'light':'dark');applyTheme();}
 function applyTheme(){document.body.classList.toggle('light',isLight);document.getElementById('theme-btn').textContent=isLight?t('themeLight'):t('themeDark');}
-window.addEventListener('DOMContentLoaded',()=>{applyTheme();applyLang();renderExamples();renderFlagSwitcher();initUsageCounter();setTimeout(runTyping,600);});
+window.addEventListener('DOMContentLoaded',()=>{applyTheme();applyLang();renderExamples();renderFlagSwitcher();initUsageCounter();setTimeout(runTyping,600);if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js');document.addEventListener('keydown',e=>{if(e.target?.classList?.contains('tc-card')&&(e.key==='Enter'||e.key===' ')){e.preventDefault();e.target.querySelector('.status-btn')?.focus();}});});
 const progressMsgs=['Reading your user story...','Identifying test scenarios...','Writing happy path cases...','Adding edge cases...','Checking negative scenarios...','Finalising test cases...'];
 let progressInterval=null;
 function startProgress(){let pct=0,msgIdx=0;document.getElementById('output').innerHTML=`<div class="progress-wrap"><div class="progress-msg" id="prog-msg">${progressMsgs[0]}</div><div class="progress-bar-track"><div class="progress-bar-fill" id="prog-bar" style="width:0%"></div></div></div>`;progressInterval=setInterval(()=>{pct=Math.min(pct+Math.random()*18,90);msgIdx=Math.min(Math.floor(pct/16),progressMsgs.length-1);const bar=document.getElementById('prog-bar'),msg=document.getElementById('prog-msg');if(bar)bar.style.width=pct+'%';if(msg)msg.textContent=progressMsgs[msgIdx];},400);}
@@ -297,8 +352,8 @@ function initUsageCounter(){
 let typingPhrases=t('typingPhrases')||[];
 let tpIdx=0,tpChar=0,tpDir=1;
 function runTyping(){const el=document.getElementById('hero-typing');if(!el||!typingPhrases.length)return;const phrase=typingPhrases[tpIdx];if(tpDir===1){tpChar++;el.innerHTML=phrase.slice(0,tpChar)+'<span class="cursor"></span>';if(tpChar>=phrase.length){tpDir=-1;setTimeout(runTyping,1800);return;}}else{tpChar--;el.innerHTML=phrase.slice(0,tpChar)+'<span class="cursor"></span>';if(tpChar<=0){tpDir=1;tpIdx=(tpIdx+1)%typingPhrases.length;}}setTimeout(runTyping,tpDir===1?45:20);}
-function setStatus(id,status,btn){const statuses=JSON.parse(localStorage.getItem('qa_statuses')||'{}');if(statuses[id]===status){delete statuses[id];btn.classList.remove('active');}else{statuses[id]=status;const card=document.getElementById('card-'+id);if(card)card.querySelectorAll('.status-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}localStorage.setItem('qa_statuses',JSON.stringify(statuses));}
-const langs=[{code:'en',name:'English',flag:'https://flagcdn.com/w40/gb.png'},{code:'fi',name:'Suomi',flag:'https://flagcdn.com/w40/fi.png'},{code:'ar',name:'العربية',flag:'https://flagcdn.com/w40/dz.png'}];
+function setStatus(id,status,btn){const statuses=JSON.parse(localStorage.getItem('qa_statuses')||'{}');if(statuses[id]===status){delete statuses[id];btn.classList.remove('active');btn.setAttribute('aria-pressed','false');}else{statuses[id]=status;const card=document.getElementById('card-'+id);if(card)card.querySelectorAll('.status-btn').forEach(b=>{b.classList.remove('active');b.setAttribute('aria-pressed','false');});btn.classList.add('active');btn.setAttribute('aria-pressed','true');}localStorage.setItem('qa_statuses',JSON.stringify(statuses));}
+const langs=[{code:'en',name:'English',flag:'./libs/flags/gb.png'},{code:'fi',name:'Suomi',flag:'./libs/flags/fi.png'},{code:'ar',name:'العربية',flag:'./libs/flags/dz.png'}];
 function renderFlagSwitcher(){const el=document.getElementById('lang-switcher');if(!el)return;el.innerHTML=langs.map(l=>`<button class="flag-btn ${l.code===currentLang?'active':''}" onclick="setLang('${l.code}')" title="${l.name}" id="flag-${l.code}"><img src="${l.flag}" alt="${l.name}" loading="lazy"></button>`).join('');}
 </script>
 </body>
